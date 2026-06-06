@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumio | Generador QR</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{min-height:100vh;background:radial-gradient(circle at 10% 15%,#7c3aed 0,transparent 35%),radial-gradient(circle at 90% 85%,#0891b2 0,transparent 35%),#0f172a;display:flex;justify-content:center;align-items:center;padding:24px;color:#fff}
+.card{width:100%;max-width:640px;background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:28px;padding:40px;text-align:center}
+.logo{font-size:2rem;font-weight:700;background:linear-gradient(120deg,#60a5fa,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;letter-spacing:-0.5px}
+.subtitle{color:#94a3b8;font-size:.9rem;margin-bottom:32px}
+.input-wrap{position:relative;margin-bottom:12px}
+.input-wrap input{width:100%;padding:14px 46px 14px 16px;border:1px solid rgba(255,255,255,.1);outline:none;border-radius:14px;font-size:.95rem;background:rgba(255,255,255,.07);color:#fff;transition:border-color .2s}
+.input-wrap input:focus{border-color:rgba(139,92,246,.6)}
+.input-wrap input::placeholder{color:#64748b}
+.clear-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;color:#64748b;cursor:pointer;font-size:18px;padding:2px;transition:color .2s;display:none}
+.clear-btn:hover{color:#94a3b8}
+.options-row{display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+.opt-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:120px}
+.opt-label{font-size:.75rem;color:#64748b;text-align:left;padding-left:2px}
+.opt-group input[type=color]{width:100%;height:36px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.07);cursor:pointer;padding:3px 6px}
+.gen-btn{width:100%;padding:14px;border:none;border-radius:50px;cursor:pointer;font-weight:600;font-size:1rem;background:linear-gradient(90deg,#3b82f6,#8b5cf6,#d946ef);color:#fff;transition:transform .2s,opacity .2s;letter-spacing:.3px}
+.gen-btn:hover{transform:translateY(-2px)}
+.gen-btn:active{transform:translateY(0)}
+.gen-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.qr-area{margin-top:32px;display:none;animation:fadeUp .4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.qr-frame{display:inline-block;padding:16px;background:#fff;border-radius:20px;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
+#qrcode canvas,#qrcode img{border-radius:4px;display:block}
+.actions{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.action-btn{padding:10px 22px;border-radius:50px;font-size:.85rem;font-weight:600;cursor:pointer;transition:transform .2s,background .2s}
+.dl-btn{background:linear-gradient(90deg,#3b82f6,#8b5cf6);border:none;color:#fff}
+.dl-btn:hover{transform:translateY(-2px)}
+.cp-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#fff}
+.cp-btn:hover{background:rgba(255,255,255,.15)}
+.meta{margin-top:10px;font-size:.75rem;color:#475569}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;border:1px solid rgba(255,255,255,.15);color:#fff;padding:10px 20px;border-radius:50px;font-size:.85rem;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.back{display:inline-block;margin-top:28px;color:#475569;font-size:.82rem;text-decoration:none;transition:color .2s}
+.back:hover{color:#94a3b8}
+.char-count{text-align:right;font-size:.72rem;color:#475569;margin-bottom:16px;margin-top:-8px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">✦ Lumio</div>
+  <p class="subtitle">Convierte texto o enlaces en un código QR al instante</p>
+
+  <div class="input-wrap">
+    <input type="text" id="txt" placeholder="Pega un enlace o escribe un texto…" oninput="onInput(this)" maxlength="500">
+    <button class="clear-btn" id="clearBtn" onclick="clearInput()" title="Limpiar">✕</button>
+  </div>
+  <div class="char-count" id="charCount">0 / 500</div>
+
+  <div class="options-row">
+    <div class="opt-group">
+      <span class="opt-label">Color oscuro</span>
+      <input type="color" id="darkColor" value="#1e1b4b">
+    </div>
+    <div class="opt-group">
+      <span class="opt-label">Color de fondo</span>
+      <input type="color" id="lightColor" value="#ffffff">
+    </div>
+    <div class="opt-group" style="flex:2">
+      <span class="opt-label">Tamaño: <span id="sizeVal">220</span>px</span>
+      <input type="range" id="sizeRange" min="150" max="350" value="220" step="10" oninput="document.getElementById('sizeVal').textContent=this.value">
+    </div>
+  </div>
+
+  <button class="gen-btn" onclick="generateQR()" id="genBtn">Generar QR</button>
+
+  <div class="qr-area" id="qrArea">
+    <div class="qr-frame">
+      <div id="qrcode"></div>
+    </div>
+    <div class="meta" id="qrMeta"></div>
+    <div class="actions">
+      <button class="action-btn dl-btn" onclick="downloadQR()">⬇ Descargar PNG</button>
+      <button class="action-btn cp-btn" onclick="copyQR()">⎘ Copiar imagen</button>
+    </div>
+  </div>
+
+  <a class="back" href="../index.html">← Volver al inicio</a>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+let lastText='',lastDark='',lastLight='',lastSize=0;
+
+function onInput(el){
+  document.getElementById('charCount').textContent=el.value.length+' / 500';
+  document.getElementById('clearBtn').style.display=el.value?'block':'none';
+}
+
+function clearInput(){
+  const el=document.getElementById('txt');
+  el.value='';onInput(el);el.focus();
+}
+
+function generateQR(){
+  const text=document.getElementById('txt').value.trim();
+  if(!text){showToast('✏️ Escribe algo primero');return;}
+  const dark=document.getElementById('darkColor').value;
+  const light=document.getElementById('lightColor').value;
+  const size=parseInt(document.getElementById('sizeRange').value);
+  if(text===lastText&&dark===lastDark&&light===lastLight&&size===lastSize)return;
+  lastText=text;lastDark=dark;lastLight=light;lastSize=size;
+  const btn=document.getElementById('genBtn');
+  btn.textContent='Generando…';btn.disabled=true;
+  document.getElementById('qrcode').innerHTML='';
+  setTimeout(()=>{
+    new QRCode(document.getElementById('qrcode'),{text,width:size,height:size,colorDark:dark,colorLight:light,correctLevel:QRCode.CorrectLevel.H});
+    const area=document.getElementById('qrArea');
+    area.style.display='block';
+    const isUrl=text.startsWith('http')||text.startsWith('www');
+    const short=text.length>40?text.slice(0,40)+'…':text;
+    document.getElementById('qrMeta').textContent=(isUrl?'🔗 URL: ':'📄 Texto: ')+short;
+    btn.textContent='Actualizar QR';btn.disabled=false;
+  },80);
+}
+
+function getCanvas(){return document.querySelector('#qrcode canvas')||null;}
+
+function downloadQR(){
+  const canvas=getCanvas();
+  if(!canvas){showToast('⚠️ Genera primero el QR');return;}
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');
+  a.download='lumio-qr-'+Date.now()+'.png';a.click();
+  showToast('✅ Imagen descargada');
+}
+
+async function copyQR(){
+  const canvas=getCanvas();
+  if(!canvas){showToast('⚠️ Genera primero el QR');return;}
+  try{
+    canvas.toBlob(async blob=>{
+      await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+      showToast('✅ Imagen copiada al portapapeles');
+    },'image/png');
+  }catch{showToast('⚠️ Tu navegador no permite copiar imágenes');}
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+document.getElementById('txt').addEventListener('keydown',e=>{if(e.key==='Enter')generateQR();});
+</script>
+</body>
+</html>
