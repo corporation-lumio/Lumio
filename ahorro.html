@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lumio | Plan de Ahorro</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b14;
+  --card:#13131f;
+  --card2:#1a1a2c;
+  --border:rgba(255,255,255,.07);
+  --muted:#64748b;
+  --text:#e2e8f0;
+  --green:#22c55e;
+  --red:#f87171;
+  --violet:#a78bfa;
+  --blue:#60a5fa;
+  --cyan:#22d3ee;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;padding:0 0 60px}
+
+/* ── NAV ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 6%;border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;background:linear-gradient(120deg,#60a5fa,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+.nav-back{color:var(--muted);text-decoration:none;font-size:.82rem;display:flex;align-items:center;gap:5px;transition:color .2s}
+.nav-back:hover{color:#fff}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:56px 6% 40px;background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(124,58,237,.18),transparent)}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:10px}
+.hero h1 em{font-style:normal;background:linear-gradient(120deg,#60a5fa,#c084fc,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:.92rem;max-width:480px;margin:0 auto;line-height:1.7}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;padding:0 6%;margin:32px 0 0;border-bottom:1px solid var(--border)}
+.tab{padding:10px 20px;font-size:.83rem;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.tab.active{color:#fff;border-color:#8b5cf6}
+.tab:hover:not(.active){color:var(--text)}
+
+/* ── MAIN ── */
+.main{padding:32px 6% 0}
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── SETUP PANEL ── */
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:600px){.setup-grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.field input,.field select{padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:11px;color:#fff;font-size:.92rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:rgba(139,92,246,.5)}
+.field input::placeholder{color:#334155}
+.field select option{background:#1e293b}
+.prefix-wrap{position:relative}
+.prefix-wrap input{padding-left:28px}
+.pfx{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
+.section-sep{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:4px 0}
+.section-label{grid-column:1/-1;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#7c3aed;margin-bottom:-4px}
+.full{grid-column:1/-1}
+.btn-calc{width:100%;padding:15px;border:none;border-radius:50px;cursor:pointer;font-size:.95rem;font-weight:700;font-family:'Inter',sans-serif;background:linear-gradient(135deg,#6366f1,#8b5cf6,#d946ef);color:#fff;margin-top:8px;transition:transform .2s,box-shadow .2s}
+.btn-calc:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(139,92,246,.3)}
+
+/* ── EXPENSE ROWS ── */
+.expense-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.expense-row{display:grid;grid-template-columns:1fr 110px auto;gap:8px;align-items:center}
+.expense-row input{padding:10px 12px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:.85rem;font-family:'Inter',sans-serif;outline:none}
+.expense-row input:focus{border-color:rgba(139,92,246,.4)}
+.del-btn{width:30px;height:30px;border:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);border-radius:8px;color:#f87171;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.del-btn:hover{background:rgba(248,113,113,.2)}
+.add-expense{padding:9px 16px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.1);border-radius:10px;color:var(--muted);font-size:.8rem;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.add-expense:hover{background:rgba(255,255,255,.08);color:#fff}
+
+/* ── RESULTS ── */
+.results-wrap{display:none}
+.results-wrap.show{display:block;animation:fadeUp .45s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* Score banner */
+.score-banner{border-radius:20px;padding:28px 32px;display:flex;align-items:center;gap:24px;margin-bottom:20px;flex-wrap:wrap}
+.score-banner.great{background:linear-gradient(135deg,rgba(34,197,94,.15),rgba(6,182,212,.1));border:1px solid rgba(34,197,94,.25)}
+.score-banner.ok{background:linear-gradient(135deg,rgba(234,179,8,.12),rgba(249,115,22,.08));border:1px solid rgba(234,179,8,.25)}
+.score-banner.tight{background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(239,68,68,.08));border:1px solid rgba(248,113,113,.25)}
+.score-circle{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;background:rgba(0,0,0,.2)}
+.score-info{}
+.score-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:4px}
+.score-sub{font-size:.83rem;color:#cbd5e1;line-height:1.6;max-width:460px}
+
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 16px}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;line-height:1}
+.stat-val.green{color:var(--green)}
+.stat-val.red{color:var(--red)}
+.stat-val.violet{color:var(--violet)}
+.stat-val.blue{color:var(--blue)}
+.stat-lbl{font-size:.7rem;color:var(--muted);margin-top:5px;text-transform:uppercase;letter-spacing:.04em}
+
+/* Donut */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:560px){.two-col{grid-template-columns:1fr}}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px}
+.chart-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:16px;color:var(--text)}
+.donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+svg.donut{flex-shrink:0}
+.legend{display:flex;flex-direction:column;gap:7px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:.75rem;color:var(--muted)}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* Bar chart */
+.bar-chart{display:flex;flex-direction:column;gap:8px}
+.bar-row{display:flex;align-items:center;gap:8px}
+.bar-label{font-size:.73rem;color:var(--muted);width:80px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.bar-track{flex:1;height:8px;background:rgba(255,255,255,.05);border-radius:50px;overflow:hidden}
+.bar-fill{height:100%;border-radius:50px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.bar-val{font-size:.72rem;color:var(--muted);min-width:52px;text-align:right;flex-shrink:0}
+
+/* Timeline */
+.timeline-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px}
+.tl-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:16px}
+.tl-scroll{overflow-x:auto;padding-bottom:8px}
+.tl-grid{display:flex;gap:8px;min-width:max-content}
+.tl-month{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 10px;min-width:82px;text-align:center;transition:all .3s}
+.tl-month.reached{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.4)}
+.tl-month.current{border-color:rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
+.tl-mon-name{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tl-mon-amt{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;color:var(--text);margin:4px 0}
+.tl-mon-bar{height:4px;border-radius:50px;background:rgba(255,255,255,.06);overflow:hidden;margin-top:4px}
+.tl-mon-fill{height:100%;border-radius:50px}
+.tl-month.reached .tl-mon-fill{background:linear-gradient(90deg,#6366f1,#a78bfa)}
+.tl-month.current .tl-mon-fill{background:#22c55e}
+.tl-month:not(.reached):not(.current) .tl-mon-fill{background:#334155}
+
+/* Action plan */
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px;margin-bottom:20px}
+.plan-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:14px}
+.action-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.action-item:last-child{border-bottom:none;padding-bottom:0}
+.action-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;border:1px solid var(--border);background:rgba(255,255,255,.04)}
+.action-body{}
+.action-head{font-size:.83rem;font-weight:600;margin-bottom:2px}
+.action-text{font-size:.77rem;color:var(--muted);line-height:1.55}
+.priority-badge{display:inline-block;padding:1px 8px;border-radius:50px;font-size:.65rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.p-high{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.25)}
+.p-mid{background:rgba(234,179,8,.12);color:#fbbf24;border:1px solid rgba(234,179,8,.2)}
+.p-low{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2)}
+
+/* TRACKER TAB */
+.tracker-intro{color:var(--muted);font-size:.85rem;line-height:1.7;margin-bottom:20px}
+.add-row{display:grid;grid-template-columns:1fr 120px 120px auto;gap:8px;margin-bottom:14px;align-items:end}
+@media(max-width:520px){.add-row{grid-template-columns:1fr 1fr;gap:8px}}
+.entries{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.entry{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.entry-cat{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;background:rgba(255,255,255,.06);flex-shrink:0}
+.entry-desc{font-size:.83rem}
+.entry-desc small{display:block;font-size:.72rem;color:var(--muted)}
+.entry-amt{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700}
+.entry-amt.income{color:var(--green)}
+.entry-amt.expense{color:var(--red)}
+.entry-del{background:none;border:none;color:#334155;cursor:pointer;font-size:.85rem;transition:color .2s}
+.entry-del:hover{color:var(--red)}
+.tracker-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.ts-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.ts-val{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800}
+.ts-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:3px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem}
+.empty-state .big{font-size:2rem;margin-bottom:8px}
+
+/* TIPS TAB */
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.tip-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+.tip-icon-big{font-size:1.8rem;margin-bottom:10px}
+.tip-head{font-family:'Syne',sans-serif;font-size:.92rem;font-weight:700;margin-bottom:6px}
+.tip-body{font-size:.78rem;color:var(--muted);line-height:1.65}
+.tip-tag{display:inline-block;margin-top:10px;padding:2px 10px;border-radius:50px;font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);color:#a78bfa}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;border:1px solid rgba(255,255,255,.12);color:#fff;padding:10px 20px;border-radius:50px;font-size:.82rem;opacity:0;transition:all .3s;pointer-events:none;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">✦ Lumio</a>
+  <a class="nav-back" href="index.html">← Inicio</a>
+</nav>
+
+<div class="hero">
+  <h1>Tu dinero,<br><em>bajo control.</em></h1>
+  <p>Calcula tu plan de ahorro, rastrea gastos diarios y aprende a guardar más cada mes.</p>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('plan',this)">📊 Plan de ahorro</div>
+  <div class="tab" onclick="switchTab('tracker',this)">📒 Registro diario</div>
+  <div class="tab" onclick="switchTab('tips',this)">💡 Estrategias</div>
+</div>
+
+<!-- ═══ TAB: PLAN ═══ -->
+<div class="main">
+<div class="panel active" id="tab-plan">
+
+  <div class="setup-grid">
+
+    <div class="section-label">Tu meta</div>
+    <div class="field">
+      <label>¿Qué estás ahorrando?</label>
+      <input type="text" id="goal-name" placeholder="Ej. Viaje, laptop, fondo de emergencia…">
+    </div>
+    <div class="field">
+      <label>Monto meta (MXN)</label>
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="meta" placeholder="10,000" min="0"></div>
+    </div>
+    <div class="field">
+      <label>Ya tengo ahorrado</label>
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="actual" placeholder="0" min="0"></div>
+    </div>
+    <div class="field">
+      <label>Plazo (meses)</label>
+      <input type="number" id="meses" placeholder="6" min="1" max="120">
+    </div>
+
+    <hr class="section-sep">
+    <div class="section-label">Tus ingresos y gastos fijos</div>
+
+    <div class="field">
+      <label>Ingreso mensual neto</label>
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="ingreso" placeholder="15,000" min="0"></div>
+    </div>
+    <div class="field">
+      <label>Renta / hipoteca</label>
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="renta" placeholder="4,000" min="0"></div>
+    </div>
+
+    <div class="full">
+      <label style="font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:8px">Otros gastos fijos (agrégalos)</label>
+      <div class="expense-list" id="expense-list">
+        <div class="expense-row">
+          <input type="text" placeholder="Ej. Comida" class="exp-name">
+          <div class="prefix-wrap" style="position:relative"><span class="pfx">$</span><input type="number" placeholder="2,000" class="exp-amount" style="padding-left:28px;width:100%"></div>
+          <button class="del-btn" onclick="delExpense(this)">✕</button>
+        </div>
+      </div>
+      <button class="add-expense" onclick="addExpense()">+ Agregar gasto</button>
+    </div>
+
+    <hr class="section-sep">
+    <div class="section-label">Opcionales</div>
+    <div class="field">
+      <label>Tasa de interés anual (%)</label>
+      <input type="number" id="interes" placeholder="0 (sin interés)" step="0.1" min="0" max="100">
+    </div>
+    <div class="field">
+      <label>¿Cuánto ahorrras hoy al mes?</label>
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="ahorro-actual" placeholder="0" min="0"></div>
+    </div>
+
+    <div class="full">
+      <button class="btn-calc" onclick="calcular()">Generar mi plan completo →</button>
+    </div>
+
+  </div>
+
+  <!-- RESULTS -->
+  <div class="results-wrap" id="results" style="margin-top:28px">
+
+    <div class="score-banner" id="score-banner">
+      <div class="score-circle" id="score-emoji">🚀</div>
+      <div class="score-info">
+        <div class="score-title" id="score-title">—</div>
+        <div class="score-sub" id="score-sub">—</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="stat-val green" id="r-mensual">—</div><div class="stat-lbl">Debes ahorrar / mes</div></div>
+      <div class="stat"><div class="stat-val blue" id="r-semanal">—</div><div class="stat-lbl">Por semana</div></div>
+      <div class="stat"><div class="stat-val violet" id="r-diario">—</div><div class="stat-lbl">Por día</div></div>
+      <div class="stat"><div class="stat-val" id="r-libre" style="color:#22d3ee">—</div><div class="stat-lbl">Dinero libre / mes</div></div>
+    </div>
+
+    <div class="two-col">
+      <!-- Donut -->
+      <div class="chart-card">
+        <div class="chart-title">Distribución de tu ingreso</div>
+        <div class="donut-wrap">
+          <svg class="donut" width="88" height="88" viewBox="0 0 88 88" id="donut-svg"></svg>
+          <div class="legend" id="donut-legend"></div>
+        </div>
+      </div>
+      <!-- Bar -->
+      <div class="chart-card">
+        <div class="chart-title">Gastos fijos desglosados</div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="timeline-card">
+      <div class="tl-title">📅 Proyección mes a mes</div>
+      <div class="tl-scroll"><div class="tl-grid" id="tl-grid"></div></div>
+    </div>
+
+    <!-- Plan de acción -->
+    <div class="plan-card">
+      <div class="plan-title">✅ Tu plan de acción personalizado</div>
+      <div id="action-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ TAB: TRACKER ═══ -->
+<div class="panel" id="tab-tracker">
+  <p class="tracker-intro">Registra tus ingresos y gastos del mes. Te muestra en tiempo real cuánto llevas ahorrado vs. tu meta.</p>
+
+  <div class="add-row">
+    <div class="field" style="margin:0">
+      <label>Descripción</label>
+      <input type="text" id="tr-desc" placeholder="Ej. Sueldo, comida, Uber…">
+    </div>
+    <div class="field" style="margin:0">
+      <label>Monto</label>
+      <div class="prefix-wrap"><span class="pfx">$</span><input type="number" id="tr-amt" placeholder="500" min="0"></div>
+    </div>
+    <div class="field" style="margin:0">
+      <label>Tipo</label>
+      <select id="tr-type">
+        <option value="income">💚 Ingreso</option>
+        <option value="expense" selected>🔴 Gasto</option>
+      </select>
+    </div>
+    <div class="field" style="margin:0">
+      <label>&nbsp;</label>
+      <button class="btn-calc" style="border-radius:11px;padding:12px 16px;font-size:.82rem" onclick="addEntry()">+ Agregar</button>
+    </div>
+  </div>
+
+  <div class="tracker-summary">
+    <div class="ts-box"><div class="ts-val green" id="tr-total-in">$0</div><div class="ts-lbl">Ingresos</div></div>
+    <div class="ts-box"><div class="ts-val red" id="tr-total-out">$0</div><div class="ts-lbl">Gastos</div></div>
+    <div class="ts-box"><div class="ts-val" id="tr-balance" style="color:var(--cyan)">$0</div><div class="ts-lbl">Balance</div></div>
+  </div>
+
+  <div class="entries" id="entries">
+    <div class="empty-state"><div class="big">📒</div>Aún no hay registros. Agrega tu primer ingreso o gasto.</div>
+  </div>
+</div>
+
+<!-- ═══ TAB: TIPS ═══ -->
+<div class="panel" id="tab-tips">
+  <div class="tips-grid">
+
+    <div class="tip-card">
+      <div class="tip-icon-big">⚡</div>
+      <div class="tip-head">Págate primero</div>
+      <div class="tip-body">El día que cobras, transfiere tu cuota de ahorro antes de gastar. Trata el ahorro como un gasto obligatorio, no opcional.</div>
+      <span class="tip-tag">Hábito #1</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">📦</div>
+      <div class="tip-head">Regla 50-30-20</div>
+      <div class="tip-body">50% necesidades, 30% deseos, 20% ahorro. Si no llegas al 20%, empieza con 5% y sube 1% cada mes hasta llegar.</div>
+      <span class="tip-tag">Estrategia</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">🔒</div>
+      <div class="tip-head">Cuenta intocable</div>
+      <div class="tip-body">Abre una cuenta de ahorro diferente a la de gastos y desactiva la tarjeta de débito asociada. Si no la ves, no la gastas.</div>
+      <span class="tip-tag">Psicología</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">☕</div>
+      <div class="tip-head">El efecto latte</div>
+      <div class="tip-body">$80 de café diario = $2,400 al mes = $28,800 al año. Audita tus gastos pequeños; son los más fáciles de reducir.</div>
+      <span class="tip-tag">Micro-ahorro</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">📈</div>
+      <div class="tip-head">Haz que tu dinero trabaje</div>
+      <div class="tip-body">CETES pagan ~10% anual. $5,000 guardados un año en CETES te dan ~$500 extra sin hacer nada. Úsalo para metas largas.</div>
+      <span class="tip-tag">Inversión</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">🎯</div>
+      <div class="tip-head">Una meta visible</div>
+      <div class="tip-body">Pon una foto de lo que estás ahorrando como fondo de pantalla. Las metas visuales aumentan hasta 42% la probabilidad de cumplirlas.</div>
+      <span class="tip-tag">Motivación</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">🚫</div>
+      <div class="tip-head">Elimina suscripciones zombie</div>
+      <div class="tip-body">Revisa tu estado de cuenta de los últimos 3 meses. La mayoría de las personas pagan 2-3 suscripciones que olvidaron y no usan.</div>
+      <span class="tip-tag">Detox financiero</span>
+    </div>
+
+    <div class="tip-card">
+      <div class="tip-icon-big">💬</div>
+      <div class="tip-head">Cuéntalo (o no)</div>
+      <div class="tip-body">Compartir tu meta con alguien de confianza te hace más responsable. O al revés: guardarlo en secreto te evita presión social de gastos.</div>
+      <span class="tip-tag">Social</span>
+    </div>
+
+  </div>
+</div>
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── TABS ── */
+function switchTab(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+/* ── EXPENSES ── */
+function addExpense(){
+  const row=document.createElement('div');
+  row.className='expense-row';
+  row.innerHTML=`<input type="text" placeholder="Descripción" class="exp-name">
+    <div class="prefix-wrap" style="position:relative"><span class="pfx">$</span><input type="number" placeholder="0" class="exp-amount" style="padding-left:28px;width:100%"></div>
+    <button class="del-btn" onclick="delExpense(this)">✕</button>`;
+  document.getElementById('expense-list').appendChild(row);
+}
+function delExpense(btn){btn.closest('.expense-row').remove()}
+
+/* ── FORMAT ── */
+const fmt=n=>n.toLocaleString('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:0});
+const fmtK=n=>n>=1000?'$'+(n/1000).toFixed(1)+'k':fmt(n);
+
+/* ── DONUT ── */
+function drawDonut(slices){
+  // slices: [{val, color, label}]
+  const total=slices.reduce((a,b)=>a+b.val,0);
+  const cx=44,cy=44,r=34,stroke=12;
+  let offset=0;
+  const circ=2*Math.PI*r;
+  let paths='';
+  slices.forEach(s=>{
+    const pct=s.val/total;
+    const dash=pct*circ;
+    const gap=circ-dash;
+    paths+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${stroke}" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}" stroke-dashoffset="${(-offset*circ).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset+=pct;
+  });
+  document.getElementById('donut-svg').innerHTML=paths;
+  const leg=document.getElementById('donut-legend');
+  leg.innerHTML=slices.map(s=>`<div class="legend-item"><div class="legend-dot" style="background:${s.color}"></div>${s.label}: ${Math.round(s.val/total*100)}%</div>`).join('');
+}
+
+/* ── CALC ── */
+function calcular(){
+  const meta=parseFloat(document.getElementById('meta').value)||0;
+  const actual=parseFloat(document.getElementById('actual').value)||0;
+  const meses=parseInt(document.getElementById('meses').value)||0;
+  const ingreso=parseFloat(document.getElementById('ingreso').value)||0;
+  const renta=parseFloat(document.getElementById('renta').value)||0;
+  const tasa=parseFloat(document.getElementById('interes').value)||0;
+  const ahorroActual=parseFloat(document.getElementById('ahorro-actual').value)||0;
+  const goalName=document.getElementById('goal-name').value||'tu meta';
+
+  if(!meta||meta<=0){showToast('⚠️ Ingresa una meta de ahorro');return;}
+  if(!meses||meses<=0){showToast('⚠️ Ingresa un plazo en meses');return;}
+  if(actual>=meta){showToast('🎉 ¡Ya alcanzaste tu meta!');return;}
+
+  // Gastos fijos adicionales
+  const rows=document.querySelectorAll('.expense-row');
+  let otrosGastos=0;
+  const expenseItems=[];
+  rows.forEach(r=>{
+    const name=r.querySelector('.exp-name').value||'Gasto';
+    const amt=parseFloat(r.querySelector('.exp-amount').value)||0;
+    if(amt>0){otrosGastos+=amt;expenseItems.push({name,amt});}
+  });
+
+  const totalGastos=renta+otrosGastos;
+  const faltante=meta-actual;
+
+  // PMT
+  let mensual;
+  if(tasa>0){
+    const r=tasa/100/12;
+    mensual=faltante*r/(Math.pow(1+r,meses)-1);
+  } else {
+    mensual=faltante/meses;
+  }
+
+  const semanal=mensual/4.33;
+  const diario=mensual/30;
+  const dineroLibre=ingreso>0?(ingreso-totalGastos-mensual):null;
+
+  // Stats
+  document.getElementById('r-mensual').textContent=fmt(mensual);
+  document.getElementById('r-semanal').textContent=fmt(semanal);
+  document.getElementById('r-diario').textContent=fmt(diario);
+  if(dineroLibre!==null){
+    document.getElementById('r-libre').textContent=fmt(Math.max(0,dineroLibre));
+    document.getElementById('r-libre').style.color=dineroLibre<0?'var(--red)':'var(--cyan)';
+  } else {
+    document.getElementById('r-libre').textContent='—';
+  }
+
+  // Score
+  const banner=document.getElementById('score-banner');
+  banner.className='score-banner';
+  let scoreClass,scoreEmoji,scoreTitle,scoreSub;
+  const pctIngreso=ingreso>0?(mensual/ingreso*100):null;
+
+  if(pctIngreso===null){
+    scoreClass='ok';scoreEmoji='📊';
+    scoreTitle=`Necesitas ${fmt(mensual)}/mes para ${goalName}`;
+    scoreSub=`En ${meses} meses habrás completado ${fmt(meta)}. Ingresa tu ingreso mensual para ver si el plan es viable.`;
+  } else if(dineroLibre>=0 && pctIngreso<=25){
+    scoreClass='great';scoreEmoji='🟢';
+    scoreTitle='¡Plan muy alcanzable!';
+    scoreSub=`Solo el ${pctIngreso.toFixed(0)}% de tu ingreso cubre la meta. Te sobran ${fmt(dineroLibre)} al mes de margen. ¡Estás en una posición excelente!`;
+  } else if(dineroLibre>=0 && pctIngreso<=40){
+    scoreClass='ok';scoreEmoji='🟡';
+    scoreTitle='Plan ajustado pero posible';
+    scoreSub=`El ${pctIngreso.toFixed(0)}% de tu ingreso va al ahorro. Es manejable pero sin mucho margen. Considera reducir gastos variables para tener más holgura.`;
+  } else {
+    scoreClass='tight';scoreEmoji='🔴';
+    scoreTitle='El plan es muy apretado';
+    scoreSub=`El ${pctIngreso?pctIngreso.toFixed(0)+'%':''} de tu ingreso requerido para la meta supera lo recomendable. Considera extender el plazo a ${Math.ceil(faltante/(ingreso*0.2))} meses (20% del ingreso) o aumentar tus ingresos.`;
+  }
+  banner.classList.add(scoreClass);
+  document.getElementById('score-emoji').textContent=scoreEmoji;
+  document.getElementById('score-title').textContent=scoreTitle;
+  document.getElementById('score-sub').textContent=scoreSub;
+
+  // Donut
+  if(ingreso>0){
+    const slices=[
+      {val:mensual,color:'#8b5cf6',label:'Ahorro meta'},
+      {val:renta,color:'#3b82f6',label:'Renta'},
+      {val:otrosGastos,color:'#06b6d4',label:'Otros gastos'},
+    ];
+    const libre=Math.max(0,dineroLibre);
+    if(libre>0) slices.push({val:libre,color:'#22c55e',label:'Libre'});
+    drawDonut(slices.filter(s=>s.val>0));
+  } else {
+    document.getElementById('donut-svg').innerHTML='<text x="44" y="48" text-anchor="middle" font-size="11" fill="#64748b">Sin ingreso</text>';
+    document.getElementById('donut-legend').innerHTML='';
+  }
+
+  // Bar chart
+  const bars=document.getElementById('bar-chart');
+  const allExp=[{name:'Ahorro meta',amt:mensual,color:'#8b5cf6'},{name:'Renta',amt:renta,color:'#3b82f6'},...expenseItems.map(e=>({...e,color:'#06b6d4'}))];
+  const maxAmt=Math.max(...allExp.map(e=>e.amt),1);
+  bars.innerHTML=allExp.filter(e=>e.amt>0).map(e=>`
+    <div class="bar-row">
+      <span class="bar-label">${e.name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${(e.amt/maxAmt*100).toFixed(1)}%;background:${e.color}"></div></div>
+      <span class="bar-val">${fmtK(e.amt)}</span>
+    </div>`).join('');
+
+  // Timeline
+  const monNames=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now=new Date().getMonth();
+  const grid=document.getElementById('tl-grid');
+  grid.innerHTML='';
+  const displayMeses=Math.min(meses,18);
+  for(let i=1;i<=displayMeses;i++){
+    const acum=actual+(tasa>0?mensual*((Math.pow(1+tasa/100/12,i)-1)/(tasa/100/12)):mensual*i);
+    const pct=Math.min(acum/meta*100,100);
+    const reached=acum>=meta;
+    const chip=document.createElement('div');
+    chip.className='tl-month'+(reached?' reached':'')+(i===1?' current':'');
+    chip.innerHTML=`<div class="tl-mon-name">${monNames[(now+i-1)%12]}</div><div class="tl-mon-amt">${fmtK(Math.min(acum,meta))}</div><div class="tl-mon-bar"><div class="tl-mon-fill" style="width:${pct.toFixed(0)}%"></div></div>`;
+    grid.appendChild(chip);
+  }
+  if(meses>18){
+    const more=document.createElement('div');
+    more.className='tl-month';
+    more.style.opacity='.45';
+    more.innerHTML=`<div class="tl-mon-name">···</div><div class="tl-mon-amt">+${meses-18} más</div><div class="tl-mon-bar"></div>`;
+    grid.appendChild(more);
+  }
+
+  // Action plan
+  const actions=[];
+  if(ahorroActual>0 && ahorroActual<mensual){
+    const diff=mensual-ahorroActual;
+    actions.push({icon:'⬆️',head:`Aumenta tu ahorro en ${fmt(diff)}/mes`,text:`Actualmente ahorras ${fmt(ahorroActual)}. Necesitas ${fmt(diff)} más para alcanzar la meta a tiempo. Revisa qué gasto puedes reducir esta semana.`,p:'high'});
+  }
+  if(ahorroActual===0){
+    actions.push({icon:'🚀',head:`Empieza con ${fmt(mensual)} este mes`,text:`Define hoy el día del mes que transferirás el dinero. El primer mes es el más difícil; después se vuelve automático.`,p:'high'});
+  }
+  if(ingreso>0 && renta/ingreso>0.35){
+    actions.push({icon:'🏠',head:'Tu renta supera el 35% del ingreso',text:`La renta consume ${(renta/ingreso*100).toFixed(0)}% de lo que ganas. Si puedes renegociar o cambiar de lugar, liberarás dinero importante para el ahorro.`,p:'mid'});
+  }
+  if(ingreso>0 && dineroLibre>0){
+    actions.push({icon:'💡',head:`Tienes ${fmt(dineroLibre)} "libres" al mes`,text:`Ese dinero tiende a desaparecer en gastos hormiga. Considera destinar aunque sea el 50% a un fondo extra de ahorro o inversión.`,p:'mid'});
+  }
+  if(tasa===0){
+    actions.push({icon:'📈',head:'Considera poner tu ahorro en CETES',text:`CETES pagan ~10% anual. Si pones ${fmt(mensual)}/mes durante ${meses} meses, ganarías aproximadamente ${fmt(mensual*meses*0.05)} extra sin esfuerzo.`,p:'low'});
+  }
+  actions.push({icon:'📅',head:'Pon un recordatorio mensual',text:`El día que cobras, transfiere inmediatamente ${fmt(mensual)} a tu cuenta de ahorro. Ponlo en tu calendario con alarma.`,p:'low'});
+
+  document.getElementById('action-list').innerHTML=actions.map(a=>`
+    <div class="action-item">
+      <div class="action-icon">${a.icon}</div>
+      <div class="action-body">
+        <div class="action-head">${a.head}<span class="priority-badge p-${a.p}">${a.p==='high'?'Urgente':a.p==='mid'?'Importante':'Consejo'}</span></div>
+        <div class="action-text">${a.text}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('results').classList.add('show');
+  setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+/* ── TRACKER ── */
+let entries=JSON.parse(localStorage.getItem('lumio-entries')||'[]');
+renderEntries();
+
+function addEntry(){
+  const desc=document.getElementById('tr-desc').value.trim();
+  const amt=parseFloat(document.getElementById('tr-amt').value)||0;
+  const type=document.getElementById('tr-type').value;
+  if(!desc){showToast('⚠️ Escribe una descripción');return;}
+  if(!amt){showToast('⚠️ Ingresa un monto');return;}
+  entries.unshift({id:Date.now(),desc,amt,type,date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short'})});
+  localStorage.setItem('lumio-entries',JSON.stringify(entries));
+  document.getElementById('tr-desc').value='';
+  document.getElementById('tr-amt').value='';
+  renderEntries();
+}
+
+function delEntry(id){
+  entries=entries.filter(e=>e.id!==id);
+  localStorage.setItem('lumio-entries',JSON.stringify(entries));
+  renderEntries();
+}
+
+function renderEntries(){
+  const container=document.getElementById('entries');
+  const totalIn=entries.filter(e=>e.type==='income').reduce((a,b)=>a+b.amt,0);
+  const totalOut=entries.filter(e=>e.type==='expense').reduce((a,b)=>a+b.amt,0);
+  document.getElementById('tr-total-in').textContent=fmt(totalIn);
+  document.getElementById('tr-total-out').textContent=fmt(totalOut);
+  const bal=totalIn-totalOut;
+  const balEl=document.getElementById('tr-balance');
+  balEl.textContent=fmt(bal);
+  balEl.style.color=bal>=0?'var(--cyan)':'var(--red)';
+
+  if(!entries.length){
+    container.innerHTML='<div class="empty-state"><div class="big">📒</div>Aún no hay registros. Agrega tu primer ingreso o gasto.</div>';
+    return;
+  }
+  const icons={income:'💚',expense:'🔴'};
+  container.innerHTML=entries.map(e=>`
+    <div class="entry">
+      <div class="entry-cat">${icons[e.type]}</div>
+      <div class="entry-desc">${e.desc}<small>${e.date}</small></div>
+      <div class="entry-amt ${e.type}">${e.type==='income'?'+':'-'}${fmt(e.amt)}</div>
+      <button class="entry-del" onclick="delEntry(${e.id})">✕</button>
+    </div>`).join('');
+}
+
+/* ── TOAST ── */
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('tab-plan').classList.contains('active'))calcular();
+  if(e.key==='Enter'&&document.getElementById('tab-tracker').classList.contains('active'))addEntry();
+});
+</script>
+</body>
+</html>
